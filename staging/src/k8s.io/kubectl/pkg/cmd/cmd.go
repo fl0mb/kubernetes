@@ -522,6 +522,7 @@ func addCmdHeaderHooks(cmds *cobra.Command, kubeConfigFlags *genericclioptions.C
 		crt.ParseCommandHeaders(cmd, args)
 		return existingPreRunE(cmd, args)
 	}
+
 	wrapConfigFn := kubeConfigFlags.WrapConfigFn
 	// Wraps CommandHeaderRoundTripper around standard RoundTripper.
 	kubeConfigFlags.WrapConfigFn = func(c *rest.Config) *rest.Config {
@@ -531,10 +532,14 @@ func addCmdHeaderHooks(cmds *cobra.Command, kubeConfigFlags *genericclioptions.C
 		c.Wrap(func(rt http.RoundTripper) http.RoundTripper {
 			// Must be separate RoundTripper; not "crt" closure.
 			// Fixes: https://github.com/kubernetes/kubectl/issues/1098
-			return &genericclioptions.CommandHeaderRoundTripper{
+
+			//flomb test to add header
+			custom := &genericclioptions.CommandHeaderRoundTripper{
 				Delegate: rt,
 				Headers:  crt.Headers,
 			}
+			custom.Headers["Tekton-Client"] = "1"
+			return custom
 		})
 		return c
 	}
